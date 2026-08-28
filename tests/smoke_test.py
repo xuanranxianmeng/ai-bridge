@@ -36,7 +36,7 @@ PORT = random.randint(20000, 30000)
 # 与 README、简历上写的数字保持一致。
 # 改动断言数量后若忘记同步文档，测试会在结尾报警并返回失败，
 # 避免「文档写 20、实际跑 19」这种一点开就露馅的不一致。
-EXPECTED_TOTAL = 19
+EXPECTED_TOTAL = 20
 
 passed, failed = 0, 0
 
@@ -121,6 +121,8 @@ def main():
     check("错误密钥访问业务接口被拒 401", code == 401, f"{code} {r}")
     code, r = call("status", {}, key=None)
     check("无 Authorization 头被拒 401", code == 401, f"{code} {r}")
+    code, r = call("no_such_action", {})
+    check("未知接口返回 404 并列出可用动作", code == 404 and isinstance(r.get("available"), list), f"{code} {r}")
     code, r = call("ping", {"device_id": "test-phone",
                             "info": {"brand": "Test", "model": "M1", "ip": "127.0.0.1", "port": 18789}})
     check("POST /ping 设备注册成功", code == 200 and r.get("ok") is True, f"{code} {r}")
