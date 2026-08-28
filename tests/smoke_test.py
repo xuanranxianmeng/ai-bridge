@@ -33,6 +33,11 @@ PY = sys.executable
 KEY = "test-key-" + os.urandom(4).hex()
 PORT = random.randint(20000, 30000)
 
+# 与 README、简历上写的数字保持一致。
+# 改动断言数量后若忘记同步文档，测试会在结尾报警并返回失败，
+# 避免「文档写 20、实际跑 19」这种一点开就露馅的不一致。
+EXPECTED_TOTAL = 19
+
 passed, failed = 0, 0
 
 
@@ -182,8 +187,14 @@ def main():
         pass
     check("主实例关闭", proc1.poll() is not None)
 
+    total = passed + failed
     print("\n" + "=" * 40)
-    print(f"结果: {passed} 通过 / {failed} 失败")
+    print(f"结果: {passed} 通过 / {failed} 失败（共 {total} 项）")
+    if total != EXPECTED_TOTAL:
+        print(f"警告: 断言总数 {total} 与声明的 {EXPECTED_TOTAL} 不一致")
+        print("      README 与简历上写的数字需要同步修改")
+        print("=" * 40)
+        return 1
     print("=" * 40)
     return 1 if failed else 0
 
