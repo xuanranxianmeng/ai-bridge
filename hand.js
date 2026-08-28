@@ -83,7 +83,7 @@ function doAction(req) {
             return { ok: true, shizuku: alive, hasFn: typeof shizuku };
         }
         case 'shot': {
-            var p = '/sdcard/xuaner_shot.png';
+            var p = '/sdcard/bridge_shot.png';
             try {
                 if (typeof shizuku === 'function') shizuku('screencap -p ' + p);
                 else $shell('screencap -p ' + p);
@@ -202,7 +202,7 @@ function handle(sock) {
         var full = new java.lang.String(all, 'UTF-8');
         var pp = full.indexOf('\r\n\r\n');
         var body = pp >= 0 ? full.substring(pp + 4) : '';
-        var respText = JSON.stringify({ ok: true, msg: 'xuaner-hand v4 alive' });
+        var respText = JSON.stringify({ ok: true, msg: 'bridge-hand v4 alive' });
         if (body) {
             try {
                 var req = JSON.parse(body);
@@ -252,4 +252,5 @@ while (nis.hasMoreElements()) {
 }
 console.log('v4 就绪，主线程待机（保持运行别关）');
 while (true) { sleep(60000); }
+
 
