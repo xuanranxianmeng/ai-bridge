@@ -96,6 +96,45 @@ ai-bridge/
 
 ---
 
+## 核心实现（面试官可快速验证）
+
+20 项冒烟测试不是凑数，背后是两段真实工程处理。摘录自 `bridge_server.py`：
+
+**1. 并发安全落盘（原子替换）**——多线程同时写任务队列，临时文件名带线程 ID + 随机串，写完 `replace()` 原子覆盖，避免 Windows 上写到一半被占用抛 `OSError [Errno 22]` 的偶发 500：
+
+```python
+def _save_json(path: Path, data: Any) -> None:
+    tmp = path.with_name(
+        f"{path.name}.{threading.get_ident()}.{secrets.token_hex(4)}.tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    try:
+        tmp.replace(path)          # 原子替换，避免写到一半断电留下坏文件
+    except OSError:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        raise
+```
+
+**2. 端口占用自动切换**——v1 写死端口，被占用直接崩；实际「上次实例没退干净」是最常见的启动失败，这个重试把它变成一行日志：
+
+```python
+def bind_with_fallback(start_port: int, tries: int):
+    last_err = None
+    for offset in range(tries):
+        port = start_port + offset
+        try:
+            return BridgeServer((HOST, port), BridgeHandler), port
+        except OSError as e:
+            last_err = e
+            log(f"端口 {port} 被占用，尝试 {port + 1}...", "WARN")
+    raise RuntimeError(f"端口 {start_port} 起连续 {tries} 个都被占用: {last_err}")
+```
+
+---
+
 ## 验证
 
 ```bash
